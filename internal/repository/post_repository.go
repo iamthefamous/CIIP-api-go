@@ -17,7 +17,7 @@ func NewPostRepository(db *pgxpool.Pool) *PostRepository {
 
 func (r *PostRepository) Create(post models.Post) error {
 	_, err := r.db.Exec(context.Background(),
-		"INSERT INTO posts (title, context) VALUES ($1, $2)",
+		"INSERT INTO posts (title, content) VALUES ($1, $2)",
 		post.Title, post.Content)
 
 	return err
