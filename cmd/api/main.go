@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/iamthefamous/CIIP-api-go/internal/db"
 	"github.com/iamthefamous/CIIP-api-go/internal/handler"
@@ -16,15 +17,24 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
+
 	database := db.NewPostgres()
 	postRepo := repository.NewPostRepository(database)
-	postService := service.NewPostService(postRepo)
-	postHandler := handler.NewPostHandler(postService)
+	userRepo := repository.NewUserRepository(database)
 
-	r := router.NewRouter(postHandler)
+	postService := service.NewPostService(postRepo)
+	authService := service.NewAuthService(userRepo, jwtSecret)
+
+	postHandler := handler.NewPostHandler(postService)
+	authHandler := handler.NewAuthHandler(authService)
+
+	r := router.NewRouter(postHandler, authHandler, jwtSecret)
 	log.Println("Starting server on :8080")
-	err := r.Run(":8080")
-	if err != nil {
-		return
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal(err)
 	}
 }
