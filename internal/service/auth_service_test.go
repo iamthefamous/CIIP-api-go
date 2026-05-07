@@ -2,60 +2,77 @@ package service
 
 import (
 	"errors"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
-
-	"github.com/iamthefamous/CIIP-api-go/internal/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
-var errInvalidCreds = errors.New("invalid credentials")
-
 type mockUserRepository struct {
-	getByEmailFn func(email string) (*models.User, error)
+	getProfileRoleByIDFn func(userID string) (string, error)
 }
 
-func (m *mockUserRepository) GetByEmail(email string) (*models.User, error) {
-	if m.getByEmailFn == nil {
-		return nil, nil
+func (m *mockUserRepository) GetProfileRoleByID(userID string) (string, error) {
+	if m.getProfileRoleByIDFn == nil {
+		return "", nil
 	}
-	return m.getByEmailFn(email)
+	return m.getProfileRoleByIDFn(userID)
+}
+
+type roundTripFunc func(req *http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func newMockHTTPClient(fn roundTripFunc) *http.Client {
+	return &http.Client{
+		Transport: fn,
+	}
 }
 
 func TestAuthServiceLoginSuccess(t *testing.T) {
-	hash, err := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.DefaultCost)
-	if err != nil {
-		t.Fatalf("failed to hash password: %v", err)
-	}
-
 	svc := NewAuthService(&mockUserRepository{
-		getByEmailFn: func(email string) (*models.User, error) {
-			if email != "admin@example.com" {
-				t.Fatalf("expected email admin@example.com, got %s", email)
+		getProfileRoleByIDFn: func(userID string) (string, error) {
+			if userID != "u1" {
+				t.Fatalf("expected user id u1, got %s", userID)
 			}
-			return &models.User{ID: "u1", Email: email, PasswordHash: string(hash), Role: "admin"}, nil
+			return "admin", nil
 		},
-	}, "test-secret")
+	}, "https://example.supabase.co", "anon-key")
+	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Path != "/auth/v1/token" || req.URL.RawQuery != "grant_type=password" {
+			t.Fatalf("unexpected auth path: %s?%s", req.URL.Path, req.URL.RawQuery)
+		}
+		if got := req.Header.Get("apikey"); got != "anon-key" {
+			t.Fatalf("expected apikey header anon-key, got %s", got)
+		}
+
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"access_token":"supabase-token","user":{"id":"u1"}}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	token, err := svc.Login("admin@example.com", "secret")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if token == "" {
-		t.Fatal("expected non-empty token")
+	if token != "supabase-token" {
+		t.Fatalf("expected supabase-token, got %s", token)
 	}
 }
 
-func TestAuthServiceLoginWrongPassword(t *testing.T) {
-	hash, err := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.DefaultCost)
-	if err != nil {
-		t.Fatalf("failed to hash password: %v", err)
-	}
-
-	svc := NewAuthService(&mockUserRepository{
-		getByEmailFn: func(email string) (*models.User, error) {
-			return &models.User{ID: "u1", Email: email, PasswordHash: string(hash), Role: "admin"}, nil
-		},
-	}, "test-secret")
+func TestAuthServiceLoginInvalidCredentialsFromSupabase(t *testing.T) {
+	svc := NewAuthService(&mockUserRepository{}, "https://example.supabase.co", "anon-key")
+	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader(`{"error":"invalid_grant"}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	token, err := svc.Login("admin@example.com", "bad-password")
 	if err == nil {
@@ -66,16 +83,52 @@ func TestAuthServiceLoginWrongPassword(t *testing.T) {
 	}
 }
 
-func TestAuthServiceLoginRepositoryError(t *testing.T) {
-	repoErr := errors.New("query failed")
+func TestAuthServiceLoginForbiddenForNonAdminProfile(t *testing.T) {
 	svc := NewAuthService(&mockUserRepository{
-		getByEmailFn: func(email string) (*models.User, error) {
-			return nil, repoErr
+		getProfileRoleByIDFn: func(userID string) (string, error) {
+			return "user", nil
 		},
-	}, "test-secret")
+	}, "https://example.supabase.co", "anon-key")
+	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"access_token":"supabase-token","user":{"id":"u1"}}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	_, err := svc.Login("admin@example.com", "secret")
-	if !errors.Is(err, repoErr) {
-		t.Fatalf("expected %v, got %v", repoErr, err)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAuthServiceLoginProfileLookupError(t *testing.T) {
+	repoErr := errors.New("query failed")
+	svc := NewAuthService(&mockUserRepository{
+		getProfileRoleByIDFn: func(userID string) (string, error) {
+			return "", repoErr
+		},
+	}, "https://example.supabase.co", "anon-key")
+	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"access_token":"supabase-token","user":{"id":"u1"}}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	_, err := svc.Login("admin@example.com", "secret")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAuthServiceLoginMissingConfig(t *testing.T) {
+	svc := NewAuthService(&mockUserRepository{}, "", "")
+
+	_, err := svc.Login("admin@example.com", "secret")
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }

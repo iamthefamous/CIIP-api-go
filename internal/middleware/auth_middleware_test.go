@@ -30,7 +30,7 @@ func signedToken(t *testing.T, secret, role string) string {
 func TestAdminOnlyMissingToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Use(AdminOnly("secret"))
+	r.Use(AdminOnly("secret", "", nil))
 	r.GET("/admin/posts", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
@@ -45,7 +45,7 @@ func TestAdminOnlyMissingToken(t *testing.T) {
 func TestAdminOnlyForbiddenForNonAdmin(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Use(AdminOnly("secret"))
+	r.Use(AdminOnly("secret", "", nil))
 	r.GET("/admin/posts", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	tok := signedToken(t, "secret", "user")
@@ -62,12 +62,42 @@ func TestAdminOnlyForbiddenForNonAdmin(t *testing.T) {
 func TestAdminOnlyAllowsAdmin(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Use(AdminOnly("secret"))
+	r.Use(AdminOnly("secret", "", nil))
 	r.GET("/admin/posts", func(c *gin.Context) { c.Status(http.StatusOK) })
 
 	tok := signedToken(t, "secret", "admin")
 	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
 	req.Header.Set("Authorization", "Bearer "+tok)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestAdminOnlyAllowsSupabaseAdminProfile(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.Use(AdminOnly("app-secret", "supabase-secret", func(userID string) (string, error) {
+		if userID == "supabase-user-id" {
+			return "admin", nil
+		}
+		return "user", nil
+	}))
+	r.GET("/admin/posts", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": "supabase-user-id",
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	s, err := token.SignedString([]byte("supabase-secret"))
+	if err != nil {
+		t.Fatalf("failed to sign supabase token: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
+	req.Header.Set("Authorization", "Bearer "+s)
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 

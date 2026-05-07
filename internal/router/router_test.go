@@ -39,7 +39,7 @@ func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 			return "token", nil
 		},
 	})
-	r := NewRouter(postHandler, authHandler, "secret")
+	r := NewRouter(postHandler, authHandler, "secret", "", nil)
 
 	postReq := httptest.NewRequest(
 		http.MethodPost,
@@ -80,7 +80,7 @@ func TestNewRouterProtectsAdminRoutes(t *testing.T) {
 			return "", errors.New("invalid credentials")
 		},
 	})
-	r := NewRouter(postHandler, authHandler, "secret")
+	r := NewRouter(postHandler, authHandler, "secret", "", nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
 	res := httptest.NewRecorder()

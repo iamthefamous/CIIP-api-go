@@ -6,32 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="bd041a76-5d9e-40d2-b836-3a85d41de025" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/CIIP-api-go.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/db-forest-config.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/go.imports.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmd/api/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/api/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/post_handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/post_handler_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/middleware/auth_middleware.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/middleware/auth_middleware.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/middleware/auth_middleware_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/middleware/auth_middleware_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/repository/user_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/user_repository.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/router/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/internal/router/router_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000001_enable_extensions.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000001_enable_extensions.up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000002_create_posts_table.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000002_create_posts_table.up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000003_create_users_table.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000003_create_users_table.up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000004_create_universities_table.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000004_create_universities_table.up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000005_create_faculties_table.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000005_create_faculties_table.up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000006_create_programs_table.down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/000006_create_programs_table.up.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/service/auth_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/auth_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/service/auth_service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/auth_service_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

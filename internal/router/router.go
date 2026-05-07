@@ -10,6 +10,8 @@ func NewRouter(
 	postHandler *handler.PostHandler,
 	authHandler *handler.AuthHandler,
 	jwtSecret string,
+	supabaseJWTSecret string,
+	getProfileRoleByID func(userID string) (string, error),
 ) *gin.Engine {
 	r := gin.Default()
 
@@ -21,7 +23,7 @@ func NewRouter(
 
 	// protected admin routes
 	admin := r.Group("/admin")
-	admin.Use(middleware.AdminOnly(jwtSecret))
+	admin.Use(middleware.AdminOnly(jwtSecret, supabaseJWTSecret, getProfileRoleByID))
 
 	admin.GET("/posts", postHandler.GetAll)
 	admin.POST("/posts", postHandler.Create)

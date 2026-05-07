@@ -21,18 +21,21 @@ func main() {
 	if jwtSecret == "" {
 		log.Fatal("JWT_SECRET is required")
 	}
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseAnonKey := os.Getenv("SUPABASE_ANON_KEY")
+	supabaseJWTSecret := os.Getenv("SUPABASE_JWT_SECRET")
 
 	database := db.NewPostgres()
 	postRepo := repository.NewPostRepository(database)
 	userRepo := repository.NewUserRepository(database)
 
 	postService := service.NewPostService(postRepo)
-	authService := service.NewAuthService(userRepo, jwtSecret)
+	authService := service.NewAuthService(userRepo, supabaseURL, supabaseAnonKey)
 
 	postHandler := handler.NewPostHandler(postService)
 	authHandler := handler.NewAuthHandler(authService)
 
-	r := router.NewRouter(postHandler, authHandler, jwtSecret)
+	r := router.NewRouter(postHandler, authHandler, jwtSecret, supabaseJWTSecret, userRepo.GetProfileRoleByID)
 	log.Println("Starting server on :8080")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)

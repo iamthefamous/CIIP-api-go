@@ -36,3 +36,20 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 
 	return user, nil
 }
+
+func (r *UserRepository) GetProfileRoleByID(userID string) (string, error) {
+	var role string
+
+	err := r.db.QueryRow(
+		context.Background(),
+		`SELECT role
+		 FROM profiles
+		 WHERE id = $1`,
+		userID,
+	).Scan(&role)
+	if err != nil {
+		return "", err
+	}
+
+	return role, nil
+}

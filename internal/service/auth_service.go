@@ -1,57 +1,84 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/iamthefamous/CIIP-api-go/internal/models"
-	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"strings"
 )
 
 type userRepository interface {
-	GetByEmail(email string) (*models.User, error)
+	GetProfileRoleByID(userID string) (string, error)
 }
 
 type AuthService struct {
-	repo      userRepository
-	JWTSecret string
+	repo             userRepository
+	supabaseURL      string
+	supabaseAnonKey  string
+	httpClient       *http.Client
 }
 
-type Claims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-	jwt.RegisteredClaims
+type supabaseLoginResponse struct {
+	AccessToken string `json:"access_token"`
+	User        struct {
+		ID string `json:"id"`
+	} `json:"user"`
 }
 
-func NewAuthService(repo userRepository, jwtSecret string) *AuthService {
-	return &AuthService{repo: repo, JWTSecret: jwtSecret}
+func NewAuthService(repo userRepository, supabaseURL, supabaseAnonKey string) *AuthService {
+	return &AuthService{
+		repo:            repo,
+		supabaseURL:     strings.TrimRight(supabaseURL, "/"),
+		supabaseAnonKey: supabaseAnonKey,
+		httpClient:      http.DefaultClient,
+	}
 }
 
 func (s *AuthService) Login(email, password string) (string, error) {
-	user, err := s.repo.GetByEmail(email)
+	if s.supabaseURL == "" || s.supabaseAnonKey == "" {
+		return "", errors.New("supabase auth config missing")
+	}
+
+	body, err := json.Marshal(map[string]string{
+		"email":    email,
+		"password": password,
+	})
 	if err != nil {
 		return "", err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	req, err := http.NewRequest(http.MethodPost, s.supabaseURL+"/auth/v1/token?grant_type=password", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("apikey", s.supabaseAnonKey)
+	req.Header.Set("Authorization", "Bearer "+s.supabaseAnonKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
 		return "", errors.New("invalid credentials")
 	}
 
-	claims := Claims{
-		UserID: user.ID,
-		Role:   user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(s.JWTSecret))
-	if err != nil {
+	var loginResp supabaseLoginResponse
+	if err := json.NewDecoder(resp.Body).Decode(&loginResp); err != nil {
 		return "", err
 	}
 
-	return tokenString, nil
+	if loginResp.AccessToken == "" || loginResp.User.ID == "" {
+		return "", errors.New("invalid auth response")
+	}
+
+	role, err := s.repo.GetProfileRoleByID(loginResp.User.ID)
+	if err != nil || role != "admin" {
+		return "", errors.New("invalid credentials")
+	}
+
+	return loginResp.AccessToken, nil
 }

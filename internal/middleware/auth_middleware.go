@@ -14,7 +14,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func AdminOnly(secret string) gin.HandlerFunc {
+func AdminOnly(appJWTSecret, supabaseJWTSecret string, getProfileRoleByID func(userID string) (string, error)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		auth := c.GetHeader("Authorization")
 
@@ -35,19 +35,57 @@ func AdminOnly(secret string) gin.HandlerFunc {
 			parts[1],
 			&Claims{},
 			func(token *jwt.Token) (interface{}, error) {
-				return []byte(secret), nil
+				return []byte(appJWTSecret), nil
 			},
 			jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
 		)
 
-		if err != nil || !token.Valid {
+		if err == nil && token.Valid {
+			claims, ok := token.Claims.(*Claims)
+			if ok && claims.Role == "admin" {
+				c.Next()
+				return
+			}
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
+			c.Abort()
+			return
+		}
+
+		if supabaseJWTSecret == "" || getProfileRoleByID == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
 			return
 		}
 
-		claims, ok := token.Claims.(*Claims)
-		if !ok || claims.Role != "admin" {
+		supabaseToken, err := jwt.Parse(
+			parts[1],
+			func(token *jwt.Token) (interface{}, error) {
+				return []byte(supabaseJWTSecret), nil
+			},
+			jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		)
+		if err != nil || !supabaseToken.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			c.Abort()
+			return
+		}
+
+		claims, ok := supabaseToken.Claims.(jwt.MapClaims)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+			c.Abort()
+			return
+		}
+
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
+			c.Abort()
+			return
+		}
+
+		role, err := getProfileRoleByID(sub)
+		if err != nil || role != "admin" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "admin only"})
 			c.Abort()
 			return
