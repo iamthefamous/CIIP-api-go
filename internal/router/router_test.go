@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/iamthefamous/CIIP-api-go/internal/handler"
 	"github.com/iamthefamous/CIIP-api-go/internal/models"
 )
@@ -32,6 +33,43 @@ func (m *mockAuthService) Login(email, password string) (string, error) {
 	return m.loginFn(email, password)
 }
 
+type mockUniversityService struct{}
+
+func (m *mockUniversityService) GetAll() ([]models.University, error) {
+	return []models.University{}, nil
+}
+func (m *mockUniversityService) GetByID(id uuid.UUID) (*models.University, error) {
+	u := &models.University{ID: id.String()}
+	return u, nil
+}
+func (m *mockUniversityService) Create(university models.University) error { return nil }
+func (m *mockUniversityService) Delete(id uuid.UUID) error                 { return nil }
+func (m *mockUniversityService) Update(id uuid.UUID, university models.University) error {
+	return nil
+}
+
+type mockFacultyService struct{}
+
+func (m *mockFacultyService) GetAll() ([]models.Faculty, error) { return []models.Faculty{}, nil }
+func (m *mockFacultyService) GetByID(id uuid.UUID) (*models.Faculty, error) {
+	f := &models.Faculty{ID: id.String()}
+	return f, nil
+}
+func (m *mockFacultyService) Create(faculty models.Faculty) error               { return nil }
+func (m *mockFacultyService) Update(id uuid.UUID, faculty models.Faculty) error { return nil }
+func (m *mockFacultyService) Delete(id uuid.UUID) error                         { return nil }
+
+type mockProgramService struct{}
+
+func (m *mockProgramService) GetAll() ([]models.Program, error) { return []models.Program{}, nil }
+func (m *mockProgramService) GetByID(id uuid.UUID) (*models.Program, error) {
+	p := &models.Program{ID: id.String()}
+	return p, nil
+}
+func (m *mockProgramService) Create(program models.Program) error               { return nil }
+func (m *mockProgramService) Update(id uuid.UUID, program models.Program) error { return nil }
+func (m *mockProgramService) Delete(id uuid.UUID) error                         { return nil }
+
 func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 	postHandler := handler.NewPostHandler(&mockPostService{})
 	authHandler := handler.NewAuthHandler(&mockAuthService{
@@ -39,7 +77,11 @@ func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 			return "token", nil
 		},
 	})
-	r := NewRouter(postHandler, authHandler, "secret", "", nil)
+	universityHandler := handler.NewUniversityHandler(&mockUniversityService{})
+	facultyHandler := handler.NewFacultyHandler(&mockFacultyService{})
+	programHandler := handler.NewProgramHandler(&mockProgramService{})
+
+	r := NewRouter(postHandler, authHandler, universityHandler, facultyHandler, programHandler, "secret", "", nil)
 
 	postReq := httptest.NewRequest(
 		http.MethodPost,
@@ -80,7 +122,11 @@ func TestNewRouterProtectsAdminRoutes(t *testing.T) {
 			return "", errors.New("invalid credentials")
 		},
 	})
-	r := NewRouter(postHandler, authHandler, "secret", "", nil)
+	universityHandler := handler.NewUniversityHandler(&mockUniversityService{})
+	facultyHandler := handler.NewFacultyHandler(&mockFacultyService{})
+	programHandler := handler.NewProgramHandler(&mockProgramService{})
+
+	r := NewRouter(postHandler, authHandler, universityHandler, facultyHandler, programHandler, "secret", "", nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
 	res := httptest.NewRecorder()

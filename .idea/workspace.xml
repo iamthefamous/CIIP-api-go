@@ -6,9 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="bd041a76-5d9e-40d2-b836-3a85d41de025" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/supabase/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/supabase/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/api/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/api/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/repository/faculty_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/faculty_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/repository/program_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/program_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/repository/university_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/university_repository.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/router/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/internal/router/router_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,7 +19,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="54" />
+    <option name="cachedIndexableFilesCount" value="61" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
