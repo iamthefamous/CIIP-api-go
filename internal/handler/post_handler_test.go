@@ -49,6 +49,33 @@ func TestPostHandlerCreateBadRequest(t *testing.T) {
 	}
 }
 
+func TestPostHandlerCreateBadRequestDoesNotCallService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	called := false
+
+	handler := NewPostHandler(&mockPostService{
+		createFn: func(post models.Post) error {
+			called = true
+			return nil
+		},
+	})
+	r := gin.New()
+	r.POST("/posts", handler.Create)
+
+	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader("{bad"))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	if called {
+		t.Fatal("expected service CreatePost not to be called")
+	}
+}
+
 func TestPostHandlerCreateSuccess(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	expected := models.Post{Title: "hello", Content: "world"}
