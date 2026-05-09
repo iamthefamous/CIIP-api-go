@@ -6,6 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type userRepository interface {
@@ -13,10 +16,11 @@ type userRepository interface {
 }
 
 type AuthService struct {
-	repo             userRepository
-	supabaseURL      string
-	supabaseAnonKey  string
-	httpClient       *http.Client
+	repo            userRepository
+	supabaseURL     string
+	supabaseAnonKey string
+	appJWTSecret    string
+	httpClient      *http.Client
 }
 
 type supabaseLoginResponse struct {
@@ -26,17 +30,18 @@ type supabaseLoginResponse struct {
 	} `json:"user"`
 }
 
-func NewAuthService(repo userRepository, supabaseURL, supabaseAnonKey string) *AuthService {
+func NewAuthService(repo userRepository, supabaseURL, supabaseAnonKey, appJWTSecret string) *AuthService {
 	return &AuthService{
 		repo:            repo,
 		supabaseURL:     strings.TrimRight(supabaseURL, "/"),
 		supabaseAnonKey: supabaseAnonKey,
+		appJWTSecret:    appJWTSecret,
 		httpClient:      http.DefaultClient,
 	}
 }
 
 func (s *AuthService) Login(email, password string) (string, error) {
-	if s.supabaseURL == "" || s.supabaseAnonKey == "" {
+	if s.supabaseURL == "" || s.supabaseAnonKey == "" || s.appJWTSecret == "" {
 		return "", errors.New("supabase auth config missing")
 	}
 
@@ -80,5 +85,17 @@ func (s *AuthService) Login(email, password string) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 
-	return loginResp.AccessToken, nil
+	appToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": loginResp.User.ID,
+		"role":    "admin",
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"iat":     time.Now().Unix(),
+	})
+
+	signedToken, err := appToken.SignedString([]byte(s.appJWTSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type mockUserRepository struct {
@@ -39,7 +41,7 @@ func TestAuthServiceLoginSuccess(t *testing.T) {
 			}
 			return "admin", nil
 		},
-	}, "https://example.supabase.co", "anon-key")
+	}, "https://example.supabase.co", "anon-key", "app-secret")
 	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		if req.URL.Path != "/auth/v1/token" || req.URL.RawQuery != "grant_type=password" {
 			t.Fatalf("unexpected auth path: %s?%s", req.URL.Path, req.URL.RawQuery)
@@ -59,13 +61,16 @@ func TestAuthServiceLoginSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if token != "supabase-token" {
-		t.Fatalf("expected supabase-token, got %s", token)
+	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte("app-secret"), nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	if err != nil || !parsed.Valid {
+		t.Fatalf("expected valid app token, got err=%v", err)
 	}
 }
 
 func TestAuthServiceLoginInvalidCredentialsFromSupabase(t *testing.T) {
-	svc := NewAuthService(&mockUserRepository{}, "https://example.supabase.co", "anon-key")
+	svc := NewAuthService(&mockUserRepository{}, "https://example.supabase.co", "anon-key", "app-secret")
 	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusUnauthorized,
@@ -88,7 +93,7 @@ func TestAuthServiceLoginForbiddenForNonAdminProfile(t *testing.T) {
 		getProfileRoleByIDFn: func(userID string) (string, error) {
 			return "user", nil
 		},
-	}, "https://example.supabase.co", "anon-key")
+	}, "https://example.supabase.co", "anon-key", "app-secret")
 	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
@@ -109,7 +114,7 @@ func TestAuthServiceLoginProfileLookupError(t *testing.T) {
 		getProfileRoleByIDFn: func(userID string) (string, error) {
 			return "", repoErr
 		},
-	}, "https://example.supabase.co", "anon-key")
+	}, "https://example.supabase.co", "anon-key", "app-secret")
 	svc.httpClient = newMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
@@ -125,7 +130,7 @@ func TestAuthServiceLoginProfileLookupError(t *testing.T) {
 }
 
 func TestAuthServiceLoginMissingConfig(t *testing.T) {
-	svc := NewAuthService(&mockUserRepository{}, "", "")
+	svc := NewAuthService(&mockUserRepository{}, "", "", "")
 
 	_, err := svc.Login("admin@example.com", "secret")
 	if err == nil {

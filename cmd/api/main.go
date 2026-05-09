@@ -37,7 +37,7 @@ func main() {
 	programRepo := repository.NewProgramRepository(database)
 
 	postService := service.NewPostService(postRepo)
-	authService := service.NewAuthService(userRepo, supabaseURL, supabaseAnonKey)
+	authService := service.NewAuthService(userRepo, supabaseURL, supabaseAnonKey, jwtSecret)
 	universityService := service.NewUniversityService(universityRepo)
 	facultyService := service.NewFacultyService(facultyRepo)
 	programService := service.NewProgramService(programRepo)
