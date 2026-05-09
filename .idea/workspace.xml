@@ -6,23 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="bd041a76-5d9e-40d2-b836-3a85d41de025" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/faculty_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/faculty_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/post_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/post_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/post_handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/post_handler_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/program_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/program_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/handler/university_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/handler/university_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/models/post.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/models/post.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/faculty_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/faculty_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/post_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/post_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/program_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/program_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/repository/university_repository.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/repository/university_repository.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/router/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/router/router_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/router/router_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/faculty_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/faculty_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/post_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/post_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/post_service_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/post_service_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/program_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/program_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/internal/service/university_servise.go" beforeDir="false" afterPath="$PROJECT_DIR$/internal/service/university_servise.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +25,11 @@
   </component>
   <component name="GOROOT" url="file://$USER_HOME$/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.9.linux-amd64" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="b4661877d55f77b0df02d9a759eda35231b5b243" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -80,7 +68,7 @@
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "b4661877",
+    "git-widget-placeholder": "main",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/home/student/Desktop/CIIP-api-go",
     "node.js.detected.package.eslint": "true",
@@ -140,5 +128,16 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
