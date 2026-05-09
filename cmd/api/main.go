@@ -14,7 +14,10 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		// .env is optional in production environments where vars are injected.
+		if !os.IsNotExist(err) {
+			log.Printf("warning: could not load .env file: %v", err)
+		}
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
