@@ -80,7 +80,7 @@
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </DataSourceFromHistory>
-  <DataSourceFromHistory isRemovedFromProject="false">
+  <DataSourceFromHistory isRemovedFromProject="true">
     <data-source source="LOCAL" name="postgres@aws-1-ap-northeast-1.pooler.supabase.com" uuid="3ecd36af-5323-4c38-859f-68f52e009a3f">
       <database-info product="PostgreSQL" version="17.6" jdbc-version="4.2" driver-name="PostgreSQL JDBC Driver" driver-version="42.7.3" dbms="POSTGRES" exact-version="17.6" exact-driver-version="42.7">
         <identifier-quote-string>&quot;</identifier-quote-string>
