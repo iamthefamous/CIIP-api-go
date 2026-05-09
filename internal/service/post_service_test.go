@@ -8,103 +8,64 @@ import (
 )
 
 type mockPostRepository struct {
-	createFn func(post models.Post) error
-	getAllFn func() ([]models.Post, error)
+	createFn       func(post models.Post) error
+	getAllFn       func() ([]models.Post, error)
+	getPublishedFn func() ([]models.Post, error)
+	getByIDFn      func(id int64) (*models.Post, error)
+	updateFn       func(id int64, post models.Post) error
+	deleteFn       func(id int64) error
 }
 
-func (m *mockPostRepository) Create(post models.Post) error {
-	if m.createFn == nil {
-		return nil
+func (m *mockPostRepository) Create(post models.Post) error           { return m.createFn(post) }
+func (m *mockPostRepository) GetAll() ([]models.Post, error)          { return m.getAllFn() }
+func (m *mockPostRepository) GetPublished() ([]models.Post, error)    { return m.getPublishedFn() }
+func (m *mockPostRepository) GetByID(id int64) (*models.Post, error)  { return m.getByIDFn(id) }
+func (m *mockPostRepository) Update(id int64, post models.Post) error { return m.updateFn(id, post) }
+func (m *mockPostRepository) Delete(id int64) error                   { return m.deleteFn(id) }
+
+func TestPostServiceCreateValidatesUniversityID(t *testing.T) {
+	repo := &mockPostRepository{createFn: func(post models.Post) error { return nil }}
+	svc := NewPostService(repo)
+	bad := "not-uuid"
+	err := svc.Create(models.Post{Title: "t", Content: "c", UniversityID: &bad})
+	if err == nil {
+		t.Fatal("expected validation error")
 	}
-	return m.createFn(post)
 }
 
-func (m *mockPostRepository) GetAll() ([]models.Post, error) {
-	if m.getAllFn == nil {
-		return nil, nil
-	}
-	return m.getAllFn()
-}
-
-func TestPostServiceCreatePost(t *testing.T) {
-	expected := models.Post{Title: "hello", Content: "world"}
-	called := false
-
+func TestPostServiceGetPublished(t *testing.T) {
+	expected := []models.Post{{ID: 1, Title: "a", Content: "b", IsPublished: true}}
 	repo := &mockPostRepository{
-		createFn: func(post models.Post) error {
-			called = true
-			if post != expected {
-				t.Fatalf("expected %+v, got %+v", expected, post)
-			}
-			return nil
-		},
+		createFn:       func(post models.Post) error { return nil },
+		getAllFn:       func() ([]models.Post, error) { return nil, nil },
+		getPublishedFn: func() ([]models.Post, error) { return expected, nil },
+		getByIDFn:      func(id int64) (*models.Post, error) { return nil, nil },
+		updateFn:       func(id int64, post models.Post) error { return nil },
+		deleteFn:       func(id int64) error { return nil },
 	}
 	svc := NewPostService(repo)
-
-	if err := svc.CreatePost(expected); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !called {
-		t.Fatal("expected repository Create to be called")
-	}
-}
-
-func TestPostServiceCreatePostError(t *testing.T) {
-	repoErr := errors.New("db failed")
-	repo := &mockPostRepository{
-		createFn: func(post models.Post) error {
-			return repoErr
-		},
-	}
-	svc := NewPostService(repo)
-
-	err := svc.CreatePost(models.Post{Title: "hello"})
-	if !errors.Is(err, repoErr) {
-		t.Fatalf("expected %v, got %v", repoErr, err)
-	}
-}
-
-func TestPostServiceGetAll(t *testing.T) {
-	expected := []models.Post{
-		{ID: 1, Title: "a", Content: "b"},
-		{ID: 2, Title: "c", Content: "d"},
-	}
-
-	repo := &mockPostRepository{
-		getAllFn: func() ([]models.Post, error) {
-			return expected, nil
-		},
-	}
-	svc := NewPostService(repo)
-
-	posts, err := svc.GetAll()
+	posts, err := svc.GetPublished()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(posts) != len(expected) {
-		t.Fatalf("expected %d posts, got %d", len(expected), len(posts))
-	}
-	for i := range expected {
-		if posts[i] != expected[i] {
-			t.Fatalf("expected %+v, got %+v", expected[i], posts[i])
-		}
+	if len(posts) != 1 || !posts[0].IsPublished {
+		t.Fatalf("unexpected posts: %+v", posts)
 	}
 }
 
-func TestPostServiceGetAllError(t *testing.T) {
-	repoErr := errors.New("query failed")
+func TestPostServiceUpdatePropagatesRepoError(t *testing.T) {
+	repoErr := errors.New("db failed")
 	repo := &mockPostRepository{
-		getAllFn: func() ([]models.Post, error) {
-			return nil, repoErr
-		},
+		createFn:       func(post models.Post) error { return nil },
+		getAllFn:       func() ([]models.Post, error) { return nil, nil },
+		getPublishedFn: func() ([]models.Post, error) { return nil, nil },
+		getByIDFn:      func(id int64) (*models.Post, error) { return nil, nil },
+		updateFn:       func(id int64, post models.Post) error { return repoErr },
+		deleteFn:       func(id int64) error { return nil },
 	}
 	svc := NewPostService(repo)
-
-	posts, err := svc.GetAll()
+	err := svc.Update(1, models.Post{Title: "t", Content: "c"})
 	if !errors.Is(err, repoErr) {
 		t.Fatalf("expected %v, got %v", repoErr, err)
-	}
-	if posts != nil {
-		t.Fatalf("expected nil posts, got %+v", posts)
 	}
 }

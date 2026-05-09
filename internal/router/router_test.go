@@ -14,13 +14,15 @@ import (
 
 type mockPostService struct{}
 
-func (m *mockPostService) CreatePost(post models.Post) error {
-	return nil
+func (m *mockPostService) Create(post models.Post) error        { return nil }
+func (m *mockPostService) GetAll() ([]models.Post, error)       { return []models.Post{}, nil }
+func (m *mockPostService) GetPublished() ([]models.Post, error) { return []models.Post{}, nil }
+func (m *mockPostService) GetByID(id int64) (*models.Post, error) {
+	p := &models.Post{ID: id}
+	return p, nil
 }
-
-func (m *mockPostService) GetAll() ([]models.Post, error) {
-	return []models.Post{}, nil
-}
+func (m *mockPostService) Update(id int64, post models.Post) error { return nil }
+func (m *mockPostService) Delete(id int64) error                   { return nil }
 
 type mockAuthService struct {
 	loginFn func(email, password string) (string, error)
@@ -38,19 +40,21 @@ type mockUniversityService struct{}
 func (m *mockUniversityService) GetAll() ([]models.University, error) {
 	return []models.University{}, nil
 }
+func (m *mockUniversityService) GetPublished() ([]models.University, error) {
+	return []models.University{}, nil
+}
 func (m *mockUniversityService) GetByID(id uuid.UUID) (*models.University, error) {
 	u := &models.University{ID: id.String()}
 	return u, nil
 }
-func (m *mockUniversityService) Create(university models.University) error { return nil }
-func (m *mockUniversityService) Delete(id uuid.UUID) error                 { return nil }
-func (m *mockUniversityService) Update(id uuid.UUID, university models.University) error {
-	return nil
-}
+func (m *mockUniversityService) Create(university models.University) error               { return nil }
+func (m *mockUniversityService) Delete(id uuid.UUID) error                               { return nil }
+func (m *mockUniversityService) Update(id uuid.UUID, university models.University) error { return nil }
 
 type mockFacultyService struct{}
 
-func (m *mockFacultyService) GetAll() ([]models.Faculty, error) { return []models.Faculty{}, nil }
+func (m *mockFacultyService) GetAll() ([]models.Faculty, error)       { return []models.Faculty{}, nil }
+func (m *mockFacultyService) GetPublished() ([]models.Faculty, error) { return []models.Faculty{}, nil }
 func (m *mockFacultyService) GetByID(id uuid.UUID) (*models.Faculty, error) {
 	f := &models.Faculty{ID: id.String()}
 	return f, nil
@@ -61,7 +65,8 @@ func (m *mockFacultyService) Delete(id uuid.UUID) error                         
 
 type mockProgramService struct{}
 
-func (m *mockProgramService) GetAll() ([]models.Program, error) { return []models.Program{}, nil }
+func (m *mockProgramService) GetAll() ([]models.Program, error)       { return []models.Program{}, nil }
+func (m *mockProgramService) GetPublished() ([]models.Program, error) { return []models.Program{}, nil }
 func (m *mockProgramService) GetByID(id uuid.UUID) (*models.Program, error) {
 	p := &models.Program{ID: id.String()}
 	return p, nil
@@ -72,28 +77,12 @@ func (m *mockProgramService) Delete(id uuid.UUID) error                         
 
 func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 	postHandler := handler.NewPostHandler(&mockPostService{})
-	authHandler := handler.NewAuthHandler(&mockAuthService{
-		loginFn: func(email, password string) (string, error) {
-			return "token", nil
-		},
-	})
+	authHandler := handler.NewAuthHandler(&mockAuthService{loginFn: func(email, password string) (string, error) { return "token", nil }})
 	universityHandler := handler.NewUniversityHandler(&mockUniversityService{})
 	facultyHandler := handler.NewFacultyHandler(&mockFacultyService{})
 	programHandler := handler.NewProgramHandler(&mockProgramService{})
 
 	r := NewRouter(postHandler, authHandler, universityHandler, facultyHandler, programHandler, "secret", "", nil)
-
-	postReq := httptest.NewRequest(
-		http.MethodPost,
-		"/posts",
-		strings.NewReader(`{"title":"hello","content":"world"}`),
-	)
-	postReq.Header.Set("Content-Type", "application/json")
-	postRes := httptest.NewRecorder()
-	r.ServeHTTP(postRes, postReq)
-	if postRes.Code == http.StatusNotFound {
-		t.Fatalf("expected POST /posts route to be registered")
-	}
 
 	getReq := httptest.NewRequest(http.MethodGet, "/posts", nil)
 	getRes := httptest.NewRecorder()
@@ -102,11 +91,14 @@ func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 		t.Fatalf("expected GET /posts route to be registered")
 	}
 
-	loginReq := httptest.NewRequest(
-		http.MethodPost,
-		"/admin/login",
-		strings.NewReader(`{"email":"admin@example.com","password":"secret"}`),
-	)
+	getByIDReq := httptest.NewRequest(http.MethodGet, "/posts/1", nil)
+	getByIDRes := httptest.NewRecorder()
+	r.ServeHTTP(getByIDRes, getByIDReq)
+	if getByIDRes.Code == http.StatusNotFound {
+		t.Fatalf("expected GET /posts/:id route to be registered")
+	}
+
+	loginReq := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"email":"admin@example.com","password":"secret"}`))
 	loginReq.Header.Set("Content-Type", "application/json")
 	loginRes := httptest.NewRecorder()
 	r.ServeHTTP(loginRes, loginReq)
@@ -117,11 +109,7 @@ func TestNewRouterRegistersPublicRoutes(t *testing.T) {
 
 func TestNewRouterProtectsAdminRoutes(t *testing.T) {
 	postHandler := handler.NewPostHandler(&mockPostService{})
-	authHandler := handler.NewAuthHandler(&mockAuthService{
-		loginFn: func(email, password string) (string, error) {
-			return "", errors.New("invalid credentials")
-		},
-	})
+	authHandler := handler.NewAuthHandler(&mockAuthService{loginFn: func(email, password string) (string, error) { return "", errors.New("invalid credentials") }})
 	universityHandler := handler.NewUniversityHandler(&mockUniversityService{})
 	facultyHandler := handler.NewFacultyHandler(&mockFacultyService{})
 	programHandler := handler.NewProgramHandler(&mockProgramService{})
@@ -131,7 +119,6 @@ func TestNewRouterProtectsAdminRoutes(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/admin/posts", nil)
 	res := httptest.NewRecorder()
 	r.ServeHTTP(res, req)
-
 	if res.Code != http.StatusUnauthorized {
 		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, res.Code)
 	}

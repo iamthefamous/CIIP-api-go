@@ -19,24 +19,25 @@ func NewRouter(
 	r := gin.Default()
 
 	// public routes
-	r.POST("/posts", postHandler.Create)
-	r.GET("/posts", postHandler.GetAll)
+	r.GET("/posts", postHandler.GetAllPublic)
+	r.GET("/posts/:id", postHandler.GetByID)
+	r.GET("/universities", universityHandler.GetPublished)
+	r.GET("/universities/:id", universityHandler.GetByID)
+	r.GET("/faculties", facultyHandler.GetPublished)
+	r.GET("/faculties/:id", facultyHandler.GetByID)
+	r.GET("/programs", programHandler.GetPublished)
+	r.GET("/programs/:id", programHandler.GetByID)
 
 	r.POST("/admin/login", authHandler.Login)
 
-	r.GET("/universities", universityHandler.GetAll)
-	r.GET("/universities/:id", universityHandler.GetByID)
-	r.GET("/faculties", facultyHandler.GetAll)
-	r.GET("/faculties/:id", facultyHandler.GetByID)
-	r.GET("/programs", programHandler.GetAll)
-	r.GET("/programs/:id", programHandler.GetByID)
-
-	// protected admin routes
 	admin := r.Group("/admin")
 	admin.Use(middleware.AdminOnly(jwtSecret, supabaseJWTSecret, getProfileRoleByID))
 
-	admin.GET("/posts", postHandler.GetAll)
+	admin.GET("/posts", postHandler.GetAllAdmin)
+	admin.GET("/posts/:id", postHandler.GetByID)
 	admin.POST("/posts", postHandler.Create)
+	admin.PUT("/posts/:id", postHandler.Update)
+	admin.DELETE("/posts/:id", postHandler.Delete)
 
 	admin.GET("/universities", universityHandler.GetAll)
 	admin.GET("/universities/:id", universityHandler.GetByID)
